@@ -123,4 +123,7 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    // Password to make the initial admin account upon seeding
+    'admin_password' => env('ADMIN_PASSWORD'),
+
 ];
