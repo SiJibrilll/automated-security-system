@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Database\Factories\IncidentFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -70,5 +71,34 @@ class Incident extends Model
     public function latestAnalysis(): HasOne
     {
         return $this->hasOne(IncidentAnalysis::class)->latestOfMany();
+    }
+
+    /**
+     * Scope a query to only include incidents without an AI analysis.
+     *
+     * @param  Builder<$this>  $query
+     * @return Builder<$this>
+     */
+    public function scopeUnanalyzed(Builder $query): Builder
+    {
+        return $query->whereDoesntHave('analyses');
+    }
+
+    /**
+     * Scope a query to only include incidents pending AI analysis.
+     *
+     * @param  Builder<$this>  $query
+     * @param  bool  $includeFailed  Whether to include incidents whose previous analysis failed
+     * @return Builder<$this>
+     */
+    public function scopePendingAnalysis(Builder $query, bool $includeFailed = false): Builder
+    {
+        if ($includeFailed) {
+            return $query->whereDoesntHave('analyses', function (Builder $q) {
+                $q->where('status', 'completed');
+            });
+        }
+
+        return $query->whereDoesntHave('analyses');
     }
 }

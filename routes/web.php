@@ -2,6 +2,7 @@
 
 use App\Models\Incident;
 use App\Services\Ai\IncidentAnalysisService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome')->name('home');
@@ -9,9 +10,13 @@ Route::view('/', 'welcome')->name('home');
 Route::middleware(['auth'])->group(function () {
     Route::view('dashboard', 'dashboard')->name('dashboard');
 
-    Route::get('/analysis', function () {
-        $incident = Incident::find(4);
-        $service = app(IncidentAnalysisService::class);
+    Route::get('/analysis', function (Request $request, IncidentAnalysisService $service) {
+        $id = $request->query('id');
+        $incident = $id ? Incident::find($id) : Incident::latest()->first();
+
+        if (! $incident) {
+            return response()->json(['message' => 'No incidents available to analyze.'], 404);
+        }
 
         $analysis = $service->analyze($incident);
 

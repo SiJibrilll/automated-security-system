@@ -81,4 +81,22 @@ return [
 
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Auto Polling Settings
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for scheduled auto-polling of unanalyzed incidents.
+    | - enabled: whether scheduled polling is active
+    | - interval: frequency in minutes (typically 5 or 10 minutes)
+    | - batch_limit: maximum unanalyzed incidents to process per run
+    |
+    */
+
+    'polling' => [
+        'enabled' => (bool) env('AI_POLLING_ENABLED', true),
+        'interval' => (int) env('AI_POLLING_INTERVAL', 5),
+        'batch_limit' => (int) env('AI_POLLING_BATCH_LIMIT', 10),
+    ],
+
 ];

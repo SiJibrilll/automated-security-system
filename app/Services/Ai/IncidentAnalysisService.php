@@ -6,6 +6,8 @@ use App\Models\Incident;
 use App\Models\IncidentAnalysis;
 use App\Services\Ai\DTOs\AiPrompt;
 use App\Services\Ai\DTOs\AiResponse;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 
 class IncidentAnalysisService
 {
@@ -27,6 +29,56 @@ class IncidentAnalysisService
         $response = $driver->analyze($prompt);
 
         return $this->persistAnalysis($incident, $prompt, $response);
+    }
+
+    /**
+     * Check if there are any incidents pending AI analysis.
+     */
+    public function hasPendingIncidents(bool $includeFailed = false): bool
+    {
+        return Incident::pendingAnalysis($includeFailed)->exists();
+    }
+
+    /**
+     * Count how many incidents are pending AI analysis.
+     */
+    public function countPendingIncidents(bool $includeFailed = false): int
+    {
+        return Incident::pendingAnalysis($includeFailed)->count();
+    }
+
+    /**
+     * Analyze all pending/unanalyzed incidents up to a given limit.
+     * Skips AI calls if there are no new incidents, saving tokens.
+     *
+     * @return Collection<int, IncidentAnalysis>
+     */
+    public function analyzePendingIncidents(
+        ?int $limit = null,
+        ?string $provider = null,
+        bool $includeFailed = false,
+        ?string $customInstructions = null
+    ): Collection {
+        $query = Incident::pendingAnalysis($includeFailed)
+            ->orderBy('id', 'asc');
+
+        if ($limit !== null && $limit > 0) {
+            $query->limit($limit);
+        }
+
+        $pendingIncidents = $query->get();
+
+        if ($pendingIncidents->isEmpty()) {
+            Log::info('AI Incident Polling: No new incidents found. Skipping AI request to save tokens.');
+
+            return collect();
+        }
+
+        Log::info("AI Incident Polling: Found {$pendingIncidents->count()} new incident(s) to analyze.");
+
+        return $pendingIncidents->map(function (Incident $incident) use ($provider, $customInstructions) {
+            return $this->analyze($incident, $provider, $customInstructions);
+        });
     }
 
     /**
