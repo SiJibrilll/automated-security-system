@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Database\Factories\IncidentFactory;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -100,5 +101,73 @@ class Incident extends Model
         }
 
         return $query->whereDoesntHave('analyses');
+    }
+
+    /**
+     * Get the source IP address if present in incident_json.
+     *
+     * @return Attribute<string|null, never>
+     */
+    protected function sourceIp(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->incident_json['source_ip'] ?? $this->incident_json['src_ip'] ?? null
+        );
+    }
+
+    /**
+     * Get the destination IP address if present in incident_json.
+     *
+     * @return Attribute<string|null, never>
+     */
+    protected function destinationIp(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->incident_json['destination_ip'] ?? $this->incident_json['dest_ip'] ?? null
+        );
+    }
+
+    /**
+     * Get the destination port if present in incident_json.
+     *
+     * @return Attribute<int|null, never>
+     */
+    protected function destinationPort(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                $port = $this->incident_json['destination_port'] ?? $this->incident_json['dest_port'] ?? $this->incident_json['dport'] ?? null;
+
+                return $port !== null ? (int) $port : null;
+            }
+        );
+    }
+
+    /**
+     * Get the source port if present in incident_json.
+     *
+     * @return Attribute<int|null, never>
+     */
+    protected function sourcePort(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                $port = $this->incident_json['source_port'] ?? $this->incident_json['src_port'] ?? $this->incident_json['sport'] ?? null;
+
+                return $port !== null ? (int) $port : null;
+            }
+        );
+    }
+
+    /**
+     * Get the network protocol if present in incident_json.
+     *
+     * @return Attribute<string|null, never>
+     */
+    protected function protocol(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->incident_json['protocol'] ?? $this->incident_json['proto'] ?? null
+        );
     }
 }

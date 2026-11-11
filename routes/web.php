@@ -9,6 +9,7 @@ Route::view('/', 'welcome')->name('home');
 
 Route::middleware(['auth'])->group(function () {
     Route::view('dashboard', 'dashboard')->name('dashboard');
+    Route::view('incidents', 'incidents.index')->name('incidents.index');
 
     Route::get('/analysis', function (Request $request, IncidentAnalysisService $service) {
         $id = $request->query('id');
